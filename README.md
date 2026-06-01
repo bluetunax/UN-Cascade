@@ -1,5 +1,3 @@
-# /README.md
-
 # 🌊 UN Cascade
 
 **An Open-Source Intelligence (OSINT) tool for tracking international aid flows from global donors to local NGO implementers.**
