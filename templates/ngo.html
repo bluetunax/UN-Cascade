@@ -1,0 +1,108 @@
+<!-- templates/ngo.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ngo_name }} - UN Cascade</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div>
+                <h1 style="color: var(--primary);">🏢 {{ ngo_name }}</h1>
+                <p>Implementer Activity Ledger</p>
+            </div>
+            <!-- Back button keeps the original search context -->
+            <a href="/cascade?country={{ country }}&year={{ year }}" class="btn btn-outline">← Back to Dashboard</a>
+        </header>
+
+        <!-- Methodology & API Confidence Section -->
+        <div class="methodology">
+            <strong>Data Methodology & Architecture</strong><br>
+            Showing downstream project-level allocations matching the implementer name: <strong>"{{ ngo_name }}"</strong>.<br>
+            
+            <!-- Database Confidence Indicator -->
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.9em;">
+                🟢 <strong>System Status:</strong> Connected &nbsp;|&nbsp; <strong>Active Database:</strong> UN OCHA FTS &nbsp;|&nbsp; <strong>API Version:</strong> HPC Tools v1 / Public Data Hub
+            </div>
+        </div>
+
+        <!-- Adjustable Date & Location Filter -->
+        <div class="stats-card" style="text-align: left; background-color: #1f2937;">
+            <h3 style="margin-bottom: 15px; font-size: 1em; color: var(--text-light);">Adjust Search Parameters</h3>
+            <form action="/ngo" method="GET" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;" onsubmit="showLoader()">
+                <!-- Hidden input keeps the NGO name consistent -->
+                <input type="hidden" name="name" value="{{ ngo_name }}">
+                
+                <div class="form-group" style="margin: 0;">
+                    <label for="country">Country (ISO-3):</label>
+                    <input type="text" id="country" name="country" value="{{ country }}" required style="width: 120px;">
+                </div>
+                
+                <div class="form-group" style="margin: 0;">
+                    <label for="year">Reporting Year:</label>
+                    <!-- Defaults to original search year -->
+                    <input type="number" id="year" name="year" value="{{ year }}" required min="2000" max="2025" style="width: 120px;">
+                </div>
+                
+                <button type="submit" class="btn">Update Ledger</button>
+            </form>
+        </div>
+
+        <!-- Total Funding for this Specific NGO -->
+        <div class="stats-card">
+            <h2>Total Funding Received ({{ country }}, {{ year }})</h2>
+            <div class="big-number" style="color: var(--success);">${{ "{:,.0f}".format(total) }}</div>
+        </div>
+
+        <!-- Specific Project Activities Table -->
+        <h3>Specific Project Activities</h3>
+        {% if activities %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 120px;">Date Reported</th>
+                    <th style="width: 200px;">Funding Source</th>
+                    <th>Project & Description</th>
+                    <th style="width: 150px; text-align: right;">Amount (USD)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for act in activities %}
+                <tr>
+                    <td style="color: var(--text-light); font-size: 0.9em;">{{ act.date }}</td>
+                    <td><span class="badge">{{ act.donor }}</span></td>
+                    <td>
+                        <strong>{{ act.project }}</strong><br>
+                        <span style="font-size: 0.85em; color: var(--text-light);">{{ act.description }}</span>
+                    </td>
+                    <td class="money" style="text-align: right;">${{ "{:,.0f}".format(act.amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <p>No specific project descriptions found for {{ ngo_name }} in {{ country }} for {{ year }}.</p>
+            <p style="font-size: 0.85em; color: var(--text-light);">Note: This may be due to multi-year funding blocks, anonymization for security, or delays in UN reporting pipelines.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- The Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <h2 style="color: white;">Querying UN Servers...</h2>
+        <p style="color: #9ca3af;">Extracting specific project data for {{ ngo_name }}.</p>
+    </div>
+
+    <script>
+        function showLoader() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

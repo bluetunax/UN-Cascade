@@ -1,0 +1,119 @@
+<!-- templates/dashboard.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UN Cascade Dashboard - {{ country }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Load Plotly via CDN -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div>
+                <h1>🌊 UN Cascade: {{ country }} ({{ year }})</h1>
+                <p>Tracking the Donor-to-Delivery Pipeline</p>
+            </div>
+            <a href="/" class="btn btn-outline">← Back to Search</a>
+        </header>
+
+        <!-- Methodology & API Confidence Section -->
+        <div class="methodology">
+            <strong>Data Methodology & Architecture</strong><br>
+            Data is sourced from the <strong>UN OCHA Financial Tracking Service (FTS) API</strong>.<br>
+            • <strong>Macro Layer:</strong> Aggregates capital flows directed to large UN Agencies and inter-governmental pooled funds.<br>
+            • <strong>Micro Layer:</strong> Explicitly filters the FTS database for downstream recipients categorized as Non-Governmental Organizations (NGOs).<br>
+            <em>Note: FTS relies on voluntary reporting. Some downstream implementing partner data may be delayed or anonymized due to security concerns.</em>
+            
+            <!-- Dynamic Database Confidence Indicator -->
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.9em; display: flex; justify-content: space-between; align-items: center;">
+                {% if is_offline %}
+                    <span style="color: #fbbf24; font-weight: bold;">🟡 SYSTEM STATUS: OFFLINE SNAPSHOT</span>
+                    <span><strong>Active Database:</strong> Local SQLite Ledger</span>
+                    <span><strong>Snapshot Captured:</strong> {{ timestamp }}</span>
+                {% else %}
+                    <span style="color: var(--success); font-weight: bold;">🟢 SYSTEM STATUS: LIVE CONNECTION</span>
+                    <span><strong>Active Database:</strong> UN OCHA FTS</span>
+                    <span><strong>API Version:</strong> HPC Tools v1 / Public Data Hub</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h2>Total Cascade Volume</h2>
+            <div class="big-number">${{ "{:,.0f}".format(total) }}</div>
+        </div>
+
+        <!-- The Plotly Sankey Diagram -->
+        <div class="stats-card">
+            <h2>Macro Flow Visualization</h2>
+            {% if sankey_json %}
+                <div id="sankey-chart"></div>
+                <script>
+                    var chartData = {{ sankey_json | safe }};
+                    Plotly.newPlot('sankey-chart', chartData.data, chartData.layout);
+                </script>
+            {% else %}
+                <p>Not enough data to generate chart.</p>
+            {% endif %}
+        </div>
+
+        <!-- Section 1: The Macro Layer -->
+        <h3>Step 1: The Macro Layer (UN Agencies)</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Source (Donor)</th>
+                    <th>Destination (UN Agency)</th>
+                    <th>Amount (USD)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flow in flows %}
+                <tr>
+                    <td>{{ flow.donor }}</td>
+                    <td><span class="badge">{{ flow.agency }}</span></td>
+                    <td class="money">${{ "{:,.0f}".format(flow.amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <br><br>
+
+        <!-- Section 2: The Micro Layer -->
+        <h3>Step 2: The Micro Layer (NGO Implementers)</h3>
+        <p><em>These are the non-governmental organizations receiving downstream funding. Click an NGO to view specific project activities.</em></p>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Implementing NGO</th>
+                    <th>NGO Type</th>
+                    <th>Funding Channel</th>
+                    <th>Amount (USD)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flow in micro_flows %}
+                <tr>
+                    <!-- Added Clickable Link to the NGO Drill-down page -->
+                    <td>
+                        <a href="/ngo?name={{ flow.ngo | urlencode }}&country={{ country }}&year={{ year }}" style="color: var(--primary); text-decoration: none; font-weight: bold;">
+                            {{ flow.ngo }} 🔗
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge">{{ flow.type }}</span>
+                    </td>
+                    <td>{{ flow.donor }}</td>
+                    <td class="money">${{ "{:,.0f}".format(flow.amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

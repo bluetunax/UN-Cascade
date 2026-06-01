@@ -1,0 +1,94 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UN Cascade - Aid Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Main Search Form -->
+        <div class="center-box" style="margin: 10vh auto 0 auto;">
+            <h1>🌊 UN Cascade</h1>
+            <p>Trace international aid flows from global donors to local implementers.</p>
+            
+            <!-- Added onsubmit to trigger the loader for LIVE searches only -->
+            <form action="/cascade" method="GET" class="search-form" onsubmit="showLoader()">
+                <div class="form-group">
+                    <label for="country">Target Country / Crisis:</label>
+                    <input type="text" id="country" name="country" value="UKR" required list="countries" autocomplete="off" placeholder="Type or select a country (e.g., UKR)">
+                    
+                    <datalist id="countries">
+                        <option value="UKR">Ukraine</option>
+                        <option value="SDN">Sudan</option>
+                        <option value="SYR">Syria</option>
+                        <option value="AFG">Afghanistan</option>
+                        <option value="PSE">State of Palestine</option>
+                        <option value="YEM">Yemen</option>
+                        <option value="COD">Democratic Republic of the Congo</option>
+                        <option value="SOM">Somalia</option>
+                        <option value="HTI">Haiti</option>
+                        <option value="MMR">Myanmar</option>
+                    </datalist>
+                </div>
+                
+                <div class="form-group">
+                    <label for="year">Year:</label>
+                    <input type="number" id="year" name="year" value="2023" required min="2000" max="2025">
+                </div>
+                
+                <button type="submit" class="btn">Trace Funds (Live API)</button>
+            </form>
+
+            <div style="margin-top: 25px; font-size: 0.85em; color: var(--text-light); border-top: 1px solid var(--border); padding-top: 15px;">
+                <p style="margin: 0;">🟢 <strong>System Status:</strong> Connected</p>
+                <p style="margin: 5px 0 0 0;"><strong>Active Database:</strong> UN OCHA Financial Tracking Service (FTS)</p>
+                <p style="margin: 5px 0 0 0;"><strong>API Version:</strong> HPC Tools v1 / Public Data Hub</p>
+            </div>
+        </div>
+
+        <!-- Local Offline Snapshots / Session History -->
+        {% if sessions %}
+        <div class="center-box" style="margin: 20px auto; padding: 20px;">
+            <h3 style="text-align: left; margin-bottom: 15px; color: var(--text-main);">🗄️ Local Offline Snapshots</h3>
+            <table class="data-table" style="font-size: 0.9em;">
+                <thead>
+                    <tr>
+                        <th>Target</th>
+                        <th>Timestamp (Local)</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in sessions %}
+                    <tr>
+                        <td><strong>{{ session.country }}</strong> ({{ session.year }})</td>
+                        <td style="color: var(--text-light);">{{ session.timestamp }}</td>
+                        <td style="text-align: right;">
+                            <a href="/cascade?session_id={{ session.id }}" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.85em;">Load Instant Snapshot</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- The Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <h2 style="color: white;">Querying UN Servers...</h2>
+        <p style="color: #9ca3af;">Aggregating Macro & Micro financial flows. This may take a few seconds.</p>
+    </div>
+
+    <script>
+        function showLoader() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
