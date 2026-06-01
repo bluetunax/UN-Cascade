@@ -31,7 +31,7 @@ You can set up UN Cascade using either **Conda** (Recommended for data environme
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/un-cascade.git
+git clone https://github.com/bluetunax/un-cascade.git
 cd un-cascade
 ```
 
